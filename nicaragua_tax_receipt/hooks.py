@@ -132,9 +132,9 @@ after_migrate = ["nicaragua_tax_receipt.maintenance.after_migrate"]
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+override_doctype_class = {
+	"Payment Entry": "nicaragua_tax_receipt.overrides.payment_entry.PaymentEntry"
+}
 
 # Document Events
 # ---------------

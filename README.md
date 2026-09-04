@@ -74,6 +74,10 @@ Con esto se logra:
 - Validacion backend por fila cuando una retencion requiere comprobante
 - Copia del check desde la plantilla al `Payment Entry` usando el flujo nativo
   de ERPNext al traer impuestos desde plantilla
+- Correccion del calculo de retenciones en `Payment Entry` para tomar como base
+  el valor neto o subtotal de la referencia y no el total con impuestos
+- Compatibilidad con los dos patrones funcionales observados en ERPNext para
+  retenciones en pagos: `Deduct` con tasa positiva y `Add` con tasa negativa
 - Campo `concepto` en `Payment Entry` listo para filtros, busqueda, reportes,
   impresiones y formatos de cheque
 - Campo `impresion_cheque` en `Supplier` para formatos de impresion de cheque
