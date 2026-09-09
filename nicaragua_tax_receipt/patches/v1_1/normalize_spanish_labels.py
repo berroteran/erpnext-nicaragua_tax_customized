@@ -8,7 +8,7 @@ LABELS = {
 	"Advance Taxes and Charges-custom_require_official_receipt_no": "Requiere comprobante oficial",
 	"Advance Taxes and Charges-custom_official_receipt_no": "Número de comprobante oficial",
 	"Payment Entry Deduction-custom_receipt_no": "No Comprobante",
-	"Supplier-impresion_cheque": "Impresion en cheque",
+	"Supplier-impresion_cheque": "Impresión en cheque",
 }
 
 PAYMENT_ENTRY_LABELS = {

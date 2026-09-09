@@ -70,13 +70,13 @@ def get_retention_reference_base_map(
 
 		reference_total_base = abs(flt(source_values.get("reference_total_base")))
 		taxable_total_base = abs(flt(source_values.get("taxable_total_base")))
-		base_allocated_amount = flt(allocated_amount * exchange_rate, precision)
+		base_allocated_amount = flt(allocated_amount * exchange_rate, precision=precision)
 
 		if reference_total_base <= 0 or taxable_total_base <= 0 or base_allocated_amount <= 0:
 			continue
 
 		allocation_ratio = min(1, base_allocated_amount / reference_total_base)
-		base_taxable_allocated_amount = flt(taxable_total_base * allocation_ratio, precision)
+		base_taxable_allocated_amount = flt(taxable_total_base * allocation_ratio, precision=precision)
 
 		base_map[get_reference_key(doctype, docname)] = {
 			"reference_doctype": doctype,
@@ -110,7 +110,7 @@ def get_retention_taxable_base_total(
 
 	return flt(
 		sum(row.get("base_taxable_allocated_amount", 0) for row in base_map.values()),
-		precision,
+		precision=precision,
 	)
 
 

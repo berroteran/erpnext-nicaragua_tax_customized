@@ -25,7 +25,7 @@ def validate_payment_entry(doc, _method=None):
 		if tax.get(TAX_REQUIRED_FIELD) and not receipt_no:
 			frappe.throw(
 				_(
-					"Fila #{0}: El numero de comprobante oficial es obligatorio para este impuesto."
+						"Fila #{0}: El número de comprobante oficial es obligatorio para este impuesto."
 				).format(tax.idx)
 			)
 

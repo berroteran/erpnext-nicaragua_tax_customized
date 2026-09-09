@@ -108,7 +108,7 @@ def get_retention_reference_bases(
 	return {
 		"base_amount": flt(
 			sum(row.get("base_taxable_allocated_amount", 0) for row in base_map.values()),
-			precision,
+			precision=precision,
 		),
 		"references": base_map,
 	}

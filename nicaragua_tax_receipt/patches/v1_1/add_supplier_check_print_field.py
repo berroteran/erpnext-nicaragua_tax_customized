@@ -16,7 +16,7 @@ def execute():
 				{
 					"fieldname": FIELDNAME,
 					"fieldtype": "Data",
-					"label": "Impresion en cheque",
+					"label": "Impresión en cheque",
 					"insert_after": "supplier_name",
 					"allow_on_submit": 1,
 				}

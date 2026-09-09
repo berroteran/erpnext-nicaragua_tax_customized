@@ -260,6 +260,7 @@ impresion y documentacion operativa.
 - `doctype_js["Payment Entry"]`
 - `doc_events["Payment Entry"]["validate"]`
 - `after_migrate`
+- `after_uninstall`
 
 ### Componentes
 
@@ -302,6 +303,9 @@ impresion y documentacion operativa.
 - `nicaragua_tax_receipt/maintenance.py`
   ejecuta una rutina idempotente de autoajuste en cada migracion para corregir
   metadata desviada sin depender de intervencion manual
+- `nicaragua_tax_receipt/uninstall.py`
+  limpia cache al desinstalar sin borrar columnas ni valores de negocio
+  capturados en DocTypes estandar de ERPNext
 
 ## Operacion autonoma del modulo
 
@@ -326,6 +330,28 @@ En la practica, el flujo esperado para otro sitio es:
 
 Eso reduce al minimo los casos donde alguien tenga que entrar manualmente a
 arreglar `Property Setter`, `Custom Field` o `field_order`.
+
+## Desinstalacion no destructiva
+
+La app esta disenada para que `bench --site <sitio> uninstall-app
+nicaragua_tax_receipt` no borre datos de negocio capturados por los usuarios.
+
+En Frappe, al desinstalar una app se eliminan documentos propios del modulo,
+como `Module Def`, `Report`, `Workspace`, `Page` o metadata enlazada al modulo de
+la app. Eso es esperado.
+
+Esta app no elimina los `Custom Field` creados sobre DocTypes estandar de
+ERPNext. Por eso se preservan las columnas y valores guardados en:
+
+- `Payment Entry.concepto`
+- `Advance Taxes and Charges.custom_official_receipt_no`
+- `Advance Taxes and Charges.custom_require_official_receipt_no`
+- `Payment Entry Deduction.custom_receipt_no`
+- `Supplier.impresion_cheque`
+
+El resultado esperado es que al desinstalar se retire la funcionalidad activa de
+la app y sus reportes propios, pero no se pierda la historia documental ya
+capturada en pagos, retenciones, deducciones o proveedores.
 
 ## Nota funcional sobre cheques
 

@@ -50,8 +50,8 @@ class TestPaymentEntryRetentionBase(TestCase):
 			target_exchange_rate=1,
 		)
 
-		self.assertEqual(flt(full_base_amount, 2), 100.0)
-		self.assertEqual(flt(partial_base_amount, 2), 50.0)
+		self.assertEqual(flt(full_base_amount, precision=2), 100.0)
+		self.assertEqual(flt(partial_base_amount, precision=2), 50.0)
 
 	def test_payment_entry_retention_tax_uses_reference_net_base(self):
 		fake_payment_entry = SimpleNamespace(
@@ -62,7 +62,7 @@ class TestPaymentEntryRetentionBase(TestCase):
 
 		tax_amount = PaymentEntry.get_current_tax_amount(fake_payment_entry, tax_row)
 
-		self.assertEqual(flt(tax_amount, 2), 2.0)
+		self.assertEqual(flt(tax_amount, precision=2), 2.0)
 
 	def test_add_negative_rate_is_treated_as_retention_reduction_tax(self):
 		fake_payment_entry = SimpleNamespace()
