@@ -92,7 +92,7 @@ after_migrate = ["nicaragua_tax_receipt.maintenance.after_migrate"]
 # ------------
 
 # before_uninstall = "nicaragua_tax_receipt.uninstall.before_uninstall"
-# after_uninstall = "nicaragua_tax_receipt.uninstall.after_uninstall"
+after_uninstall = "nicaragua_tax_receipt.uninstall.after_uninstall"
 
 # Integration Setup
 # ------------------

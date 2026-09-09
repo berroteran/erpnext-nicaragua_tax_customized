@@ -1,10 +1,77 @@
 ## Nicaragua Tax Receipt
 
+Aplicacion Frappe / ERPNext 15 para Nicaragua.
+
+Este repositorio es una app de ERPNext. No es un script suelto, no es un
+parche manual y no modifica directamente el core de Frappe ni de ERPNext.
+
+Todas las decisiones tecnicas de esta app deben seguir las reglas y practicas
+propias de Frappe Framework 15 y ERPNext 15:
+
+- instalacion por sitio con `bench --site <sitio> install-app`
+- migracion por sitio con `bench --site <sitio> migrate`
+- metadata versionada por patches, hooks y archivos de la app
+- validaciones criticas en servidor
+- uso de `Custom Field` y `Property Setter` para extender DocTypes estandar
+- consultas SQL parametrizadas cuando el framework no provee una API adecuada
+- compatibilidad con Python soportado por Frappe / ERPNext 15
+- idempotencia en patches y rutinas de mantenimiento
+- comportamiento seguro en benches multisitio
+
 App reusable para Frappe / ERPNext 15 que agrega control de comprobantes
 oficiales sobre retenciones aplicadas en `Payment Entry` a partir de
 `Purchase Taxes and Charges Template`, y que ademas versiona campos utiles para
 impresion y operacion como `concepto` en `Payment Entry` e `impresion_cheque`
 en `Supplier`.
+
+## Reglas del proyecto
+
+Estas reglas son parte del contrato tecnico del proyecto:
+
+- La app debe funcionar como una app normal de Frappe / ERPNext 15.
+- La app debe poder instalarse en un sitio sin depender de pasos manuales en la
+  interfaz.
+- La app debe poder migrarse varias veces sin duplicar campos, reportes,
+  workspaces, cards, shortcuts ni property setters.
+- La app debe estar preparada para benches multisitio o multitenant.
+- Cada instalacion, migracion o desinstalacion debe afectar solo al sitio sobre
+  el que corre el comando `bench --site`.
+- La app no debe asumir que todos los sitios tienen la misma metadata manual.
+- La app debe validar y crear defensivamente los campos que necesita antes de
+  usarlos.
+- La app no debe borrar datos de negocio al desinstalarse.
+- La desinstalacion no debe eliminar columnas ni valores guardados en DocTypes
+  estandar como `Payment Entry`, `Advance Taxes and Charges`,
+  `Payment Entry Deduction` o `Supplier`.
+- Si en el futuro se propone una limpieza destructiva, debe tener backup,
+  justificacion tecnica y aprobacion explicita antes de implementarse.
+- Las etiquetas visibles para usuarios deben estar en espanol cuando el flujo
+  funcional sea para operaciones en Nicaragua.
+- Los nombres internos de campos pueden estar en ingles cuando sea conveniente,
+  pero deben ser estables, claros y compatibles con Frappe.
+
+## Lenguaje y claridad
+
+El proyecto debe mantenerse escrito de forma simple y sin ambiguedad.
+
+Para evitar confusion en humanos y LLM:
+
+- usar `app` o `aplicacion` para referirse a este repositorio
+- usar `sitio` para cada tenant de Frappe / ERPNext
+- usar `bench` para la instalacion fisica compartida
+- usar `migrate` para aplicar patches y reconciliar metadata del sitio
+- usar `Custom Field` para campos agregados sobre DocTypes estandar
+- usar `Property Setter` para ajustes de layout o propiedades de campos
+- evitar llamar "manual" a un cambio que debe quedar versionado en la app
+- evitar instrucciones que dependan de recordar pasos no documentados
+
+Antes de cambiar comportamiento del framework, primero se debe validar contra:
+
+- documentacion oficial de Frappe / ERPNext 15
+- codigo fuente real del core instalado
+- metadata real del sitio de prueba
+- patrones existentes dentro de esta app
+- pruebas en `testing15.inversionesbel.com`
 
 ## Objetivo de negocio
 
@@ -475,8 +542,9 @@ ajustes normales de instalacion en otros sitios con Frappe / ERPNext 15.
   personalizaciones fuertes en `field_order`.
 - La regla de cheque depende hoy del valor exacto `Cheque` en
   `mode_of_payment`.
-- Los labels actuales estan en ingles tecnico; pueden adaptarse a espanol si
-  se desea estandarizar la experiencia de usuario.
+- Las etiquetas visibles del flujo principal deben mantenerse en espanol claro.
+- Los nombres internos de campos deben mantenerse estables para no romper
+  datos, reportes ni formatos de impresion.
 
 ## Posibles mejoras futuras
 
