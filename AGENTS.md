@@ -1,99 +1,144 @@
-# Nicaragua Tax Receipt - Reglas Para Agentes
+# Nicaragua Tax Receipt: Instrucciones del Proyecto
 
-Este proyecto es una aplicacion de Frappe / ERPNext 15.
+## Identidad y compatibilidad
 
-No tratar este repositorio como un script aislado. Todo cambio debe respetar el
-ciclo normal de una app Frappe: instalar por sitio, migrar por sitio, validar
-metadata por sitio y mantener compatibilidad con benches multisitio.
+`nicaragua_tax_receipt` es una aplicación instalable de Frappe / ERPNext. No
+es un script ni una personalización manual de un sitio.
 
-## Contexto tecnico obligatorio
+- Objetivo técnico: Frappe Framework 15 y ERPNext 15.
+- Stack de desarrollo validado: Frappe 15.102.1, ERPNext 15.101.0 y Python
+  3.12.3.
+- La app debe extender ERPNext mediante hooks, patches, `Custom Field`,
+  `Property Setter`, reportes estándar y controladores. No modificar el core
+  de Frappe ni de ERPNext.
+- Los nombres internos de campos son estables y pueden estar en inglés. Las
+  etiquetas visibles para la operación nicaragüense deben estar en español.
 
-- Framework objetivo: Frappe 15.
-- Aplicacion objetivo: ERPNext 15.
-- Python objetivo: la version soportada por el bench Frappe / ERPNext 15 donde
-  se instala la app. En este servidor se valido con Python 3.12.3.
-- Base de datos: MariaDB gestionada por Frappe/Bench.
-- La app extiende DocTypes estandar mediante `Custom Field`, `Property Setter`,
-  hooks, patches y reportes.
-- La app no debe modificar archivos del core de Frappe ni de ERPNext.
+## Propósito funcional
 
-## Multisitio y multitenant
+La aplicación registra y consulta comprobantes asociados a retenciones en
+pagos de proveedores. La regla reusable vive en cada fila de una plantilla de
+impuestos y el número real del comprobante se guarda en cada fila aplicada al
+`Payment Entry`.
 
-- El codigo bajo `apps/nicaragua_tax_receipt` es compartido por todos los
-  sitios del mismo bench.
-- La metadata y los datos son por sitio.
-- Todo comando de instalacion, migracion, prueba o desinstalacion debe usar
-  `bench --site <sitio>`.
-- Un cambio aplicado en un sitio no debe asumirse aplicado en otro sitio.
-- Cada patch debe ser idempotente y seguro ante sitios parcialmente migrados.
-- Antes de usar un DocType, campo, reporte, workspace, card o shortcut, validar
-  que exista o crearlo de forma defensiva.
+No confundir los conceptos:
 
-## Regla de prueba
+- `Purchase Taxes and Charges`: fila de una plantilla de impuestos.
+- `Advance Taxes and Charges`: fila de impuestos aplicada en un pago.
+- `Payment Entry Deduction`: fila de deducción o pérdida aplicada en un pago.
+- La plantilla define la regla; el pago guarda el dato transaccional.
 
-Primero se prueba siempre en `testing15.inversionesbel.com` usando el bench de
-staging:
+## Módulos funcionales
 
-```bash
-sudo -u frappe bash -lc 'cd /home/frappe/frappe-bench-staging && bench --site testing15.inversionesbel.com migrate'
-```
+### 1. Contabilidad: retenciones de impuestos
 
-Solo despues de validar en `testing15.inversionesbel.com` se puede proponer
-aplicar a otros sitios. Para pasar a otros sitios se requiere confirmacion
-explicita del usuario.
+Extiende el flujo estándar de `Purchase Taxes and Charges Template` y
+`Payment Entry`.
 
-## Instalacion
+- `Purchase Taxes and Charges.custom_require_official_receipt_no`:
+  `Requiere comprobante oficial`. Define por fila si la retención exige el
+  comprobante.
+- `Advance Taxes and Charges.custom_require_official_receipt_no`: copia la
+  regla de la fila aplicada al pago y permanece editable.
+- `Advance Taxes and Charges.custom_official_receipt_no`: `Número de
+  comprobante oficial`, guardado por cada retención aplicada.
+- El número debe ser obligatorio únicamente cuando la fila tiene la regla
+  activada. La validación debe ejecutarse en servidor mediante
+  `validate_payment_entry`; la interfaz no sustituye esa validación.
+- Para `Payment Entry` de tipo `Pay` a un `Supplier`, las retenciones de
+  reducción se calculan sobre la parte neta proporcional de las referencias
+  aplicadas, no sobre el total con impuestos.
+- La lógica cubre referencias estándar `Purchase Invoice`, `Purchase Order` y
+  `Purchase Receipt`, y retenciones configuradas como `Deduct` con tasa
+  positiva o `Add` con tasa negativa.
+- Cualquier cambio al cálculo debe incluir pruebas que cubran importe parcial,
+  total, tasa positiva, tasa negativa y ausencia de referencias válidas.
 
-La instalacion debe:
+### 2. Operación de pagos y cheques
 
-- crear los campos requeridos por la app si no existen
-- adoptar campos funcionales existentes cuando sea seguro
-- preservar valores ya grabados
-- publicar el reporte en el workspace estandar de Contabilidad
-- limpiar cache del sitio despues de reconciliar metadata
-- no depender de ajustes manuales en Customize Form
+Extiende `Payment Entry` sin duplicar su lógica estándar.
 
-## Desinstalacion
+- `Payment Entry.concepto`: campo obligatorio `Concepto`, tipo `Small Text`.
+  Sirve para filtros, reportes, impresiones y formatos de cheque.
+- El bloque `Información de Cheque` debe quedar después de `Concepto` y debe
+  estar siempre visible.
+- Cuando `mode_of_payment` es exactamente `Cheque`, `reference_no` y
+  `reference_date` son obligatorios. Esta regla debe validarse en cliente y
+  servidor.
+- No se debe cambiar el comportamiento de otros modos de pago.
 
-La desinstalacion debe ser no destructiva.
+### 3. Proveedores e impresión de cheques
 
-La app no debe borrar:
+Extiende `Supplier`.
 
-- columnas agregadas a DocTypes estandar
-- valores guardados en `Payment Entry`
-- valores guardados en `Advance Taxes and Charges`
-- valores guardados en `Payment Entry Deduction`
-- valores guardados en `Supplier`
-- datos historicos usados en impresiones, reportes o auditoria
+- `Supplier.impresion_cheque`: `Impresión en cheque`, campo de texto para
+  formatos de impresión.
+- Si ese campo ya existe en un sitio, conservar su campo y sus datos; no
+  renombrarlo ni reemplazarlo.
 
-Si alguna vez se necesita borrar metadata o datos, debe existir un plan escrito,
-backup, prueba en `testing15.inversionesbel.com` y aprobacion explicita del
-usuario.
+### 4. Contabilidad: deducciones o pérdida
 
-## Programacion
+Extiende la tabla `Payment Entry Deduction`.
 
-- Usar APIs de Frappe cuando existan.
-- Usar SQL parametrizado cuando sea necesario consultar reportes o metadata.
-- No asumir que un campo existe por haber existido en otro sitio.
-- No asumir que el orden de campos del core es identico entre sitios.
-- No asumir que una personalizacion manual existe en todos los tenants.
-- Mantener validaciones criticas del lado servidor.
-- Mantener JavaScript solo como ayuda de interfaz.
-- Mantener patches y hooks idempotentes.
-- No introducir dependencias externas sin justificar compatibilidad con Frappe /
-  ERPNext 15.
+- `Payment Entry Deduction.custom_receipt_no`: `No Comprobante`, opcional.
+- Debe estar visible por defecto en la tabla y habilitado para filtros,
+  búsqueda global e informes.
+- El valor pertenece a la fila de deducción, no al encabezado del pago.
 
-## Documentacion
+### 5. Contabilidad: informes Nicaragua
 
-El README debe explicar en lenguaje simple:
+Publica el reporte estándar `Comprobantes de retencion en la fuente` dentro
+del workspace estándar `Accounting`.
 
-- que esta app extiende ERPNext 15
-- que problema de negocio resuelve
-- que campos agrega
-- que reportes agrega
-- como se instala
-- como se migra
-- que versiones fueron validadas
-- que la app es multisitio
-- que la desinstalacion no borra datos de negocio
+- La tarjeta visible se llama `Informes Nicaragua`.
+- El reporte exige `Desde` y `Hasta`.
+- Consolida filas con comprobante de `Advance Taxes and Charges` y de
+  `Payment Entry Deduction`.
+- El selector de cuentas debe ofrecer únicamente cuentas utilizadas en esas dos
+  tablas que correspondan a pasivo, balance y retención o impuesto; no debe
+  ser un selector genérico de todas las cuentas.
+- El reporte y el selector requieren permiso de lectura en `Payment Entry` y
+  uno de los roles: `Accounts User`, `Accounts Manager`, `Auditor` o
+  `System Manager`.
 
+## Datos y desinstalación
+
+- La app es multi-sitio: cada instalación, migración y desinstalación se
+  ejecuta con `bench --site <sitio>` y debe afectar solamente ese sitio.
+- Los patches y la reconciliación de metadata deben ser idempotentes.
+- `after_install` y `after_migrate` deben crear o reconciliar campos, layout,
+  etiquetas y reporte de forma defensiva.
+- La desinstalación no debe borrar columnas ni valores guardados en DocTypes
+  estándar. En particular, debe preservar `concepto`, los comprobantes de
+  impuestos y deducciones, e `impresion_cheque`.
+- No usar eliminación directa de datos o metadata como mecanismo normal de
+  actualización. Un cambio destructivo exige preflight, respaldo, justificación
+  y aprobación explícita.
+
+## Reglas de implementación
+
+- Antes de cambiar Frappe, ERPNext, un hook, metadata, cálculo o permiso,
+  validar el comportamiento real en documentación oficial de v15, código core,
+  código de esta app y metadata del sitio objetivo.
+- No suponer nombres de campos, estructura de tablas, orden del formulario,
+  permisos, ni comportamiento de plantillas. Verificarlos.
+- Usar APIs y helpers de Frappe cuando existan; las consultas SQL deben ser
+  parametrizadas y limitarse a casos donde aporten una necesidad real.
+- Las reglas financieras, de obligatoriedad y permisos deben vivir en servidor.
+- No depender de cambios manuales en Customize Form para que la app funcione.
+- Mantener las etiquetas en español claro y los mensajes sin ambigüedad.
+- Al renombrar o eliminar un artefacto versionado, agregar un patch idempotente
+  que sanee por sitio las referencias antiguas de `Report`, `Workspace`, links
+  y shortcuts.
+
+## Flujo de validación y despliegue
+
+- Probar primero en `testing15.inversionesbel.com` con
+  `/home/frappe/frappe-bench-staging` y como usuario `frappe`.
+- Antes de proponer otros sitios, ejecutar como mínimo revisión de diff,
+  compilación con el Python del bench, importación de módulos Frappe y pruebas
+  específicas de la lógica modificada.
+- Validar instalación, migración repetida, visibilidad del reporte en
+  `Accounting`, permisos y desinstalación no destructiva cuando el cambio
+  afecte esos ámbitos.
+- Solo aplicar en otros sitios tras una confirmación explícita del usuario.

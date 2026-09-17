@@ -109,148 +109,93 @@ La app separa correctamente:
 - el dato transaccional propio de cada fila aplicada en el pago
 - la trazabilidad detallada de cada fila de retencion
 
-## Aporte funcional
+## Características por módulo
 
-La app agrega un comportamiento instalable y versionable por Git para que el
-comprobante oficial pase a ser parte del sistema y no una nota externa o un
-dato manual disperso.
+La aplicación está organizada por módulos funcionales de ERPNext. El detalle
+técnico para mantenimiento y evolución se encuentra en [AGENTS.md](AGENTS.md).
 
-Con esto se logra:
+### Contabilidad: retenciones de impuestos
 
-- definir por fila de impuesto si esa retencion exige comprobante oficial
-- capturar un numero de comprobante por cada fila de retencion en el pago
-- validarlo tambien en servidor, no solo en la interfaz
-- dejar el dato disponible para filtros, busquedas y reportes
-- versionar por Git campos manuales de uso frecuente para pagos y cheques sin
-  romper sitios que ya los tengan creados
+Este es el módulo principal de la aplicación. Extiende las plantillas de
+impuestos de compra y las retenciones aplicadas en `Payment Entry`.
 
-## Features
+- Agrega `Requiere comprobante oficial` por fila de
+  `Purchase Taxes and Charges`.
+- Copia esa regla a cada fila de `Advance Taxes and Charges` al aplicar la
+  plantilla en una Entrada de pago.
+- Agrega `Número de comprobante oficial` por cada fila de retención aplicada.
+- Exige el número únicamente en las filas cuya regla está activada.
+- Valida esa obligatoriedad en servidor para impedir omisiones por API, import
+  o modificaciones del navegador.
+- Mantiene trazabilidad independiente para cada retención; dos impuestos en un
+  mismo pago pueden tener comprobantes distintos.
+- Corrige el cálculo de retenciones de pagos a proveedores para usar el valor
+  neto proporcional de la referencia, no el total con impuestos.
+- Soporta el patrón `Deduct` con tasa positiva y el patrón `Add` con tasa
+  negativa que ERPNext puede generar al traer una plantilla.
 
-- Campo de configuracion por fila en `Purchase Taxes and Charges`:
-  `custom_require_official_receipt_no`
-- Campo reusable en `Payment Entry` para concepto del pago:
-  `concepto`
-- Campo opcional por fila en `Payment Entry Deduction`:
-  `custom_receipt_no`
-- Campo reusable en `Supplier` para texto de impresion en cheque:
-  `impresion_cheque`
-- Campo de trazabilidad en `Advance Taxes and Charges`:
-  `custom_official_receipt_no`
-- Campo espejo en `Advance Taxes and Charges`:
-  `custom_require_official_receipt_no`
-- Validacion backend por fila cuando una retencion requiere comprobante
-- Copia del check desde la plantilla al `Payment Entry` usando el flujo nativo
-  de ERPNext al traer impuestos desde plantilla
-- Correccion del calculo de retenciones en `Payment Entry` para tomar como base
-  el valor neto o subtotal de la referencia y no el total con impuestos
-- Compatibilidad con los dos patrones funcionales observados en ERPNext para
-  retenciones en pagos: `Deduct` con tasa positiva y `Add` con tasa negativa
-- Campo `concepto` en `Payment Entry` listo para filtros, busqueda, reportes,
-  impresiones y formatos de cheque
-- Campo `impresion_cheque` en `Supplier` para formatos de impresion de cheque
-- Campo `No Comprobante` visible por defecto en la tabla
-  `Payment Entry Deduction`
-- Campo `No Comprobante` preparado con filtros estandar, indice de busqueda
-  del framework y visibilidad en reportes para la tabla
-  `Payment Entry Deduction`
-- Reporte `Comprobantes de retencion en la fuente` con filtro por rango de
-  fechas y selector de cuentas unico para consultar comprobantes capturados
-  en `Impuestos` y `Deducciones o Pérdida`
-- Acceso directo al reporte desde el workspace `Accounting`
-- Tarjeta `Informes Nicaragua` dentro del workspace `Accounting` para agrupar
-  reportes propios del modulo
-- Validacion de `Cheque / No. de Referencia` y `Cheque / Fecha de referencia`
-  cuando `Modo de pago = Cheque`
-- Layout de `Payment Entry` para mostrar `Concepto` antes de la seccion
-  `ID de transacción`
-- Bloque `ID de transacción` siempre visible en `Payment Entry`
-- Sección renombrada de `ID de transacción` a `Información de Cheque`
-- La obligatoriedad de `Cheque / No. de Referencia` y `Cheque / Fecha de
-  referencia` sigue gobernada por `Modo de pago = Cheque`
-- Politica conservadora para campos funcionales ya existentes en algunos sitios:
-  si ya existen, la app no los reemplaza ni toca sus datos
-- App desacoplada del core de ERPNext
-- Bootstrap de metadata al instalar la app mediante `after_install`
-- Autoajuste de metadata en cada `bench migrate` mediante `after_migrate`
-- Verificacion defensiva del reporte para autocorregir campos faltantes antes
-  de ejecutar SQL
+La regla vive por fila porque la plantilla define una condición reutilizable,
+mientras que el número de comprobante es un dato real e histórico de cada pago.
 
-## Modelo funcional
+### Contabilidad: deducciones o pérdida
 
-### 1. Plantilla
+Extiende las filas de `Payment Entry Deduction`.
 
-La plantilla no guarda el numero de comprobante real de cada pago.
-La plantilla guarda la regla por cada fila de impuesto:
+- Agrega el campo opcional `No Comprobante`.
+- Lo muestra por defecto en la tabla, sin que el usuario tenga que activarlo.
+- Lo deja disponible para filtros estándar, búsqueda global e informes.
+- Conserva el dato en la fila específica de deducción, no en el encabezado del
+  pago.
 
-- esta fila requiere comprobante oficial
-- esta fila no lo requiere
+### Contabilidad: informes Nicaragua
 
-### 2. Payment Entry
+Integra reportes propios de la app dentro del workspace estándar `Accounting`.
 
-El `Payment Entry` recibe las filas de impuestos desde la plantilla y cada fila
-puede llevar:
+- Crea la tarjeta `Informes Nicaragua`.
+- Publica el reporte `Comprobantes de retencion en la fuente`.
+- El reporte exige un rango de fechas.
+- Consolida comprobantes capturados en `Impuestos` y en
+  `Deducciones o Pérdida`.
+- Permite filtrar por cuentas utilizadas realmente en esas dos tablas, sin
+  repetirlas y sin mostrar un catálogo genérico de cuentas.
+- El selector limita las opciones a cuentas de pasivo, de balance, asociadas a
+  impuestos o retenciones.
+- Respeta permisos de lectura de `Payment Entry` y los roles contables del
+  reporte.
 
-- `custom_require_official_receipt_no`
-- `custom_official_receipt_no`
+### Operación de pagos y cheques
 
-Ademas, el `Payment Entry` puede exponer un campo funcional reutilizable:
+Extiende el formulario estándar `Payment Entry` para documentar el pago y la
+emisión de cheques.
 
-- `concepto`
+- Agrega `Concepto`, obligatorio, para el detalle operativo del pago.
+- `Concepto` queda disponible para filtros, reportes, impresiones y formatos
+  de cheque.
+- Ubica la sección `Concepto` antes de la información de cheque.
+- Renombra `ID de transacción` como `Información de Cheque`.
+- Mantiene siempre visible el bloque `Información de Cheque`, incluso antes de
+  seleccionar proveedor, cliente o cuentas.
+- Cuando `Modo de pago` es exactamente `Cheque`, exige `Cheque / No. de
+  Referencia` y `Cheque / Fecha de referencia` en interfaz y servidor.
 
-Ese campo sirve para:
+### Proveedores e impresión de cheques
 
-- busqueda
-- filtros
-- reportes del pago
-- print formats
-- formatos de cheque
-- consultas operativas
+Extiende el maestro `Supplier`.
 
-### 3. Filas de retencion
+- Agrega `Impresión en cheque` para textos usados por formatos de impresión.
+- Si un sitio ya posee ese campo, la aplicación lo conserva y no reemplaza ni
+  elimina sus datos.
 
-Cada fila de `Advance Taxes and Charges` recibe su propia regla y su propio
-numero de comprobante.
+### Plataforma, instalación y compatibilidad
 
-Esto permite trazabilidad detallada por retencion individual, por ejemplo:
-
-- 2% IR en la fuente
-- 1% IR en la fuente
-
-Cada una puede exigir y guardar un comprobante distinto si el caso de negocio lo
-requiere.
-
-### 4. Supplier
-
-El `Supplier` puede exponer un campo funcional reutilizable:
-
-- `impresion_cheque`
-
-Su objetivo principal es servir a impresiones y formatos de cheque.
-
-## Por que la regla vive por fila y no en el encabezado
-
-En este caso la obligatoriedad del comprobante no pertenece al documento padre,
-sino a cada impuesto de la plantilla.
-
-Eso permite que:
-
-- una fila de retencion exija comprobante
-- otra fila no lo exija
-- varias filas guarden numeros distintos
-- la trazabilidad y validacion sean coherentes con cada impuesto aplicado
-
-## Alcance actual
-
-La version actual implementa el flujo para:
-
-- `Purchase Taxes and Charges`
-- `Payment Entry`
-- `Advance Taxes and Charges`
-- `Supplier`
-
-En particular, esta orientada al escenario donde el pago aplica impuestos de
-compra / retenciones a proveedores y donde se requieren campos auxiliares para
-impresion y documentacion operativa.
+- Es una app independiente y versionable por Git; no modifica el core de
+  ERPNext ni Frappe.
+- Crea y reconcilia su metadata por `after_install` y `after_migrate`.
+- La reconciliación es idempotente y corrige campos, etiquetas, layout y
+  publicación del reporte sin requerir pasos manuales normales.
+- Está preparada para benches multisitio: cada acción se ejecuta por sitio.
+- Su desinstalación preserva los valores históricos capturados en DocTypes
+  estándar, incluidos comprobantes, concepto e impresión de cheque.
 
 ## Arquitectura tecnica
 
@@ -291,7 +236,7 @@ impresion y documentacion operativa.
   publica el reporte de comprobantes, crea un shortcut y agrega la tarjeta
   `Informes Nicaragua` en `Accounting`
 - `nicaragua_tax_receipt/patches/v1_1/move_payment_entry_transaction_section_below_concept.py`
-  mueve la sección `ID de transacción` debajo de `Concepto`
+  mueve la sección `Información de Cheque` debajo de `Concepto`
 - `nicaragua_tax_receipt/patches/v1_1/reorder_payment_entry_field_order.py`
   normaliza el `field_order` del `Payment Entry` para reflejar ese layout
 - `nicaragua_tax_receipt/patches/v1_1/align_cheque_section_visibility.py`
@@ -367,8 +312,8 @@ En la practica eso provoca que:
 Para este modulo, ese comportamiento no es ideal porque el bloque de
 identificacion bancaria y de cheque debe estar disponible siempre.
 
-Por eso la app ajusta la visibilidad del bloque `ID de transacción` y de sus
-campos para que siempre esten visibles.
+Por eso la app ajusta la visibilidad del bloque `Información de Cheque` y de
+sus campos para que siempre esten visibles.
 
 También renombra esa sección a `Información de Cheque` para que el usuario vea
 un encabezado mas claro y alineado al proceso de negocio.
@@ -391,7 +336,7 @@ La regla de negocio queda separada asi:
 8. El proveedor puede usar `impresion_cheque` en formatos de impresion.
 9. Si el modo de pago es `Cheque`, `Cheque / No. de Referencia` y
    `Cheque / Fecha de referencia` pasan a ser obligatorios.
-10. La sección `ID de transacción` se acomoda debajo de `Concepto`.
+10. La sección `Información de Cheque` se acomoda debajo de `Concepto`.
 
 ## Beneficios
 
@@ -575,7 +520,6 @@ ajustes normales de instalacion en otros sitios con Frappe / ERPNext 15.
 ## Posibles mejoras futuras
 
 - traducciones formales `es`
-- reportes listos para retenciones con comprobante
 - print formats que muestren el comprobante oficial
 - soporte para mas tipos de documentos fiscales relacionados
 - naming y labels mas orientados a normativa local
