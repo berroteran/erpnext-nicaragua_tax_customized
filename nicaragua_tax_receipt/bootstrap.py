@@ -1,5 +1,6 @@
 import frappe
 
+from nicaragua_tax_receipt.bank_roles import ensure_bank_role_contract
 from nicaragua_tax_receipt.patches.v1_0.add_tax_receipt_custom_fields import execute as add_tax_receipt_custom_fields
 from nicaragua_tax_receipt.patches.v1_1.add_payment_entry_concept_field import execute as add_payment_entry_concept_field
 from nicaragua_tax_receipt.patches.v1_1.add_payment_entry_deduction_receipt_field import (
@@ -25,6 +26,7 @@ def reconcile_site_metadata():
 
 def ensure_core_fields():
 	"""Create the fields that the app depends on before any layout or report logic."""
+	ensure_bank_role_contract()
 	add_tax_receipt_custom_fields()
 	add_payment_entry_concept_field()
 	add_payment_entry_deduction_receipt_field()

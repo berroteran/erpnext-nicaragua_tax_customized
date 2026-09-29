@@ -25,6 +25,9 @@ el comprobante en cada fila aplicada y consultarlo desde Contabilidad.
 - Campo `Concepto` para pagos y `Impresión en cheque` para proveedores.
 - Información de cheque siempre visible y obligatoria solo para pagos con modo
   de pago `Cheque`.
+- Roles `Bank User` y `Bank Manager` con permisos sobre `Bank`.
+- Versión declarada, rama y commit desplegados visibles para administradores en
+  `Installed Applications`, sin almacenar metadata Git en la base de datos.
 - Reporte `Comprobantes de retencion en la fuente` dentro de la tarjeta
   `Informes Nicaragua` del workspace estándar `Accounting`.
 - Instalación por sitio, reconciliación idempotente y desinstalación que

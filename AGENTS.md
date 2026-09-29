@@ -28,6 +28,7 @@ El alcance funcional se divide en estos módulos:
 - Contabilidad: informes Nicaragua.
 - Operación de pagos y cheques.
 - Proveedores e impresión de cheques.
+- Administración técnica: versión desplegada de la aplicación.
 
 No asumir comportamiento, campos, permisos, layout ni fórmulas. Validarlos en
 la documentación oficial de Frappe/ERPNext 15, código core, código de la app y

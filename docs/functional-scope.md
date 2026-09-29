@@ -65,6 +65,19 @@ fuente` en el workspace estándar `Accounting`.
 - Requiere permiso de lectura en `Payment Entry` y alguno de estos roles:
   `Accounts User`, `Accounts Manager`, `Auditor` o `System Manager`.
 
+### Roles bancarios
+
+La aplicación incluye el mismo contrato de roles bancarios de `BEL CUSTOM`:
+
+- `Bank User`: puede leer, editar, seleccionar, reportar, exportar, imprimir,
+  enviar por correo y compartir documentos `Bank`; no puede crear, eliminar,
+  enviar, cancelar ni enmendar.
+- `Bank Manager`: tiene los mismos permisos y además puede crear documentos
+  `Bank`.
+
+Si los roles o sus permisos ya existen, la aplicación los reconcilia sin crear
+un `Custom DocPerm` duplicado.
+
 ## Operación de pagos y cheques
 
 La aplicación extiende `Payment Entry`.
@@ -87,3 +100,19 @@ La aplicación extiende `Supplier` con:
 
 Si el campo ya existía en un sitio, la aplicación no lo reemplaza, renombra ni
 elimina sus valores.
+
+## Administración técnica
+
+La pantalla estándar `Installed Applications` muestra una sección compartida
+llamada `Commits desplegados`.
+
+- La aplicación agrega solo su fila, identificada por
+  `nicaragua_tax_receipt`; no reemplaza las filas de otras aplicaciones.
+- La fila muestra nombre, versión declarada, rama, SHA corto y disponibilidad
+  de Git del checkout instalado.
+- La consulta se realiza al abrir o refrescar el formulario, por lo que refleja
+  actualizaciones futuras del repositorio sin guardar esos datos en la base de
+  datos.
+- Solo `Administrator` y `System Manager` pueden consultar esta información.
+- Si Git no está disponible, la versión sigue visible y rama/SHA se muestran
+  como no disponibles.
