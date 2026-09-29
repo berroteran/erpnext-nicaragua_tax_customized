@@ -94,10 +94,10 @@ class TestDeployedVersion(FrappeTestCase):
 		js_path = Path(frappe.get_app_path("nicaragua_tax_receipt", "public", "js", "installed_applications.js"))
 		javascript = js_path.read_text(encoding="utf-8")
 
-		self.assertIn("window.frappe.installed_application_deployed_commits", javascript)
-		self.assertIn("namespace.providers = namespace.providers || {}", javascript)
-		self.assertIn("row.dataset.appName = appName", javascript)
-		self.assertIn("row.cells[index].textContent = value", javascript)
+		self.assertIn('frappe.provide("bel.installed_versions")', javascript)
+		self.assertIn("shared.upsert = shared.upsert ||", javascript)
+		self.assertIn('"data-bel-app": appName', javascript)
+		self.assertIn('$("<td>").text(value)', javascript)
 		self.assertNotIn("innerHTML", javascript)
 
 	def test_frontend_javascript_has_valid_syntax(self):
