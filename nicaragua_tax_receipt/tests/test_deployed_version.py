@@ -94,9 +94,9 @@ class TestDeployedVersion(FrappeTestCase):
 		js_path = Path(frappe.get_app_path("nicaragua_tax_receipt", "public", "js", "installed_applications.js"))
 		javascript = js_path.read_text(encoding="utf-8")
 
-		self.assertIn('frappe.provide("bel.installed_versions")', javascript)
-		self.assertIn("shared.upsert = shared.upsert ||", javascript)
-		self.assertIn('"data-bel-app": appName', javascript)
+		self.assertIn('frappe.provide("nicaragua_tax_receipt.installed_versions")', javascript)
+		self.assertIn("function updateOwnRow", javascript)
+		self.assertIn('"data-bel-app": APP_NAME', javascript)
 		self.assertIn('$("<td>").text(value)', javascript)
 		self.assertNotIn("innerHTML", javascript)
 
