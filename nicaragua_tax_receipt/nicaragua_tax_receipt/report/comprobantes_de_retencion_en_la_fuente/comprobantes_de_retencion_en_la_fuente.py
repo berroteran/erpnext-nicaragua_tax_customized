@@ -41,7 +41,7 @@ def can_read_report_data():
 	if not frappe.has_permission("Payment Entry", "read"):
 		return False
 
-	return any(frappe.has_role(role) for role in REPORT_ROLES)
+	return bool(set(REPORT_ROLES) & set(frappe.get_roles()))
 
 
 def validate_filters(filters):
