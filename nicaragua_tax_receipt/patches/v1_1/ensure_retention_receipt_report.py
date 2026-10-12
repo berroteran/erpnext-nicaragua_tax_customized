@@ -38,14 +38,21 @@ def ensure_report():
 		report.insert(ignore_permissions=True)
 		return
 
-	report.ref_doctype = "Payment Entry"
-	report.report_type = "Script Report"
-	report.module = REPORT_MODULE
-	report.is_standard = "Yes"
-	report.disabled = 0
-	report.prepared_report = 0
-	report.set("roles", [{"role": role} for role in ROLES])
-	report.save(ignore_permissions=True)
+	changed = False
+	changed |= set_value_if_changed(report, "ref_doctype", "Payment Entry")
+	changed |= set_value_if_changed(report, "report_type", "Script Report")
+	changed |= set_value_if_changed(report, "module", REPORT_MODULE)
+	changed |= set_value_if_changed(report, "is_standard", "Yes")
+	changed |= set_value_if_changed(report, "disabled", 0)
+	changed |= set_value_if_changed(report, "prepared_report", 0)
+
+	roles = [{"role": role} for role in ROLES]
+	if [row.role for row in report.roles] != list(ROLES):
+		report.set("roles", roles)
+		changed = True
+
+	if changed:
+		report.save(ignore_permissions=True)
 
 
 def ensure_workspace_shortcut():
@@ -55,10 +62,9 @@ def ensure_workspace_shortcut():
 	workspace = frappe.get_doc("Workspace", WORKSPACE_NAME)
 	for shortcut in workspace.shortcuts:
 		if shortcut.type == "Report" and shortcut.link_to == REPORT_NAME:
-			shortcut.link_to = REPORT_NAME
-			if shortcut.label != WORKSPACE_SHORTCUT_LABEL:
-				shortcut.label = WORKSPACE_SHORTCUT_LABEL
-			workspace.save(ignore_permissions=True)
+			changed = set_value_if_changed(shortcut, "label", WORKSPACE_SHORTCUT_LABEL)
+			if changed:
+				workspace.save(ignore_permissions=True)
 			return
 
 	workspace.append(
@@ -77,12 +83,14 @@ def ensure_workspace_card():
 		return
 
 	workspace = frappe.get_doc("Workspace", WORKSPACE_NAME)
-	ensure_workspace_link_group(workspace)
-	ensure_workspace_content_block(workspace)
-	workspace.save(ignore_permissions=True)
+	changed = ensure_workspace_link_group(workspace)
+	changed |= ensure_workspace_content_block(workspace)
+	if changed:
+		workspace.save(ignore_permissions=True)
 
 
 def ensure_workspace_link_group(workspace):
+	changed = False
 	card_break = None
 	report_link = None
 
@@ -101,6 +109,7 @@ def ensure_workspace_link_group(workspace):
 			},
 		)
 		card_break = workspace.links[-1]
+		changed = True
 
 	if not report_link:
 		workspace.append(
@@ -114,19 +123,26 @@ def ensure_workspace_link_group(workspace):
 			},
 		)
 		report_link = workspace.links[-1]
+		changed = True
 
-	report_link.label = REPORT_NAME
-	report_link.link_type = "Report"
-	report_link.link_to = REPORT_NAME
-	report_link.is_query_report = 1
-	report_link.hidden = 0
+	changed |= set_value_if_changed(report_link, "label", REPORT_NAME)
+	changed |= set_value_if_changed(report_link, "link_type", "Report")
+	changed |= set_value_if_changed(report_link, "link_to", REPORT_NAME)
+	changed |= set_value_if_changed(report_link, "is_query_report", 1)
+	changed |= set_value_if_changed(report_link, "hidden", 0)
 
-	rebuild_workspace_link_order(workspace, card_break, report_link)
+	changed |= rebuild_workspace_link_order(workspace, card_break, report_link)
+	return changed
 
 
 def rebuild_workspace_link_order(workspace, card_break, report_link):
 	other_links = [row for row in workspace.links if row.name not in {card_break.name, report_link.name}]
-	workspace.set("links", other_links + [card_break, report_link])
+	ordered_links = other_links + [card_break, report_link]
+	if all(current is expected for current, expected in zip(workspace.links, ordered_links, strict=True)):
+		return False
+
+	workspace.set("links", ordered_links)
+	return True
 
 
 def ensure_workspace_content_block(workspace):
@@ -134,8 +150,10 @@ def ensure_workspace_content_block(workspace):
 		content = json.loads(workspace.content or "[]")
 	except Exception:
 		content = []
+	if not isinstance(content, list):
+		content = []
 
-	content = [
+	updated_content = [
 		block
 		for block in content
 		if not (
@@ -144,7 +162,7 @@ def ensure_workspace_content_block(workspace):
 		)
 	]
 
-	content.append(
+	updated_content.append(
 		{
 			"id": "ntr-informes-nicaragua-card",
 			"type": "card",
@@ -154,4 +172,16 @@ def ensure_workspace_content_block(workspace):
 			},
 		}
 	)
-	workspace.content = json.dumps(content)
+	if content == updated_content:
+		return False
+
+	workspace.content = json.dumps(updated_content)
+	return True
+
+
+def set_value_if_changed(document, fieldname, value):
+	if document.get(fieldname) == value:
+		return False
+
+	setattr(document, fieldname, value)
+	return True
