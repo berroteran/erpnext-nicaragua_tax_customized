@@ -14,6 +14,15 @@ y ERPNext 15. No es un script ni una personalización manual de un sitio.
 
 ## Documentación obligatoria
 
+El objetivo tributario incluye IVA, retenciones de IR para la DGI e IMI
+municipal, con cuentas, bases y comprobantes diferenciados. Leer
+[Contexto tributario y cobertura](docs/tax-scope-and-coverage.md) antes de
+afirmar cobertura fiscal. No confundir el código del catálogo DGI, la tasa,
+la cuenta contable y el número de comprobante. No presentar la fotografía
+del catálogo de 2019 como prueba de vigencia actual ni aplicar la misma base
+proporcional a todas sus categorías. Las funciones pendientes documentadas
+no son características implementadas.
+
 Antes de cambiar una funcionalidad, leer el documento que corresponde:
 
 - [Alcance funcional por módulo](docs/functional-scope.md)

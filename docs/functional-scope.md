@@ -2,6 +2,13 @@
 
 ## Objetivo de negocio
 
+El objetivo ampliado comprende IVA configurable y su tratamiento contable,
+retenciones de IR para la DGI, retenciones de IMI municipal y comprobantes
+por fila. El estado real frente a ese objetivo y el catálogo aportado por el
+propietario se detallan en [Contexto tributario y cobertura](tax-scope-and-coverage.md).
+Las funciones descritas a continuación no constituyen una implementación de
+todos los impuestos de Nicaragua.
+
 En una retención, la plantilla define una regla reutilizable y cada pago guarda
 el comprobante real que fue emitido. El dato se conserva por fila para permitir
 auditoría, conciliación documental, impresión y reportes.

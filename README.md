@@ -3,6 +3,15 @@
 Aplicación para Frappe Framework 15 y ERPNext 15 que incorpora trazabilidad de
 comprobantes de retención en las Entradas de pago de Nicaragua.
 
+Su objetivo funcional es ampliar la configuración tributaria de Nicaragua:
+IVA configurable, precio con IVA incluido, IVA acreditable o incorporado al
+costo según corresponda, retenciones de IR para la DGI e IMI municipal, y
+comprobantes por fila. Ese objetivo **no está completamente implementado**.
+El catálogo de códigos DGI aportado como referencia tampoco está implementado
+como catálogo fiscal de la aplicación. Consulte el
+[contexto tributario y revisión de cobertura](docs/tax-scope-and-coverage.md)
+para distinguir funciones existentes, capacidades del core y pendientes.
+
 No modifica el core de Frappe ni ERPNext. Extiende sus DocTypes estándar con
 metadata versionada, validaciones de servidor, patches y reportes.
 
@@ -57,6 +66,7 @@ es `testing15.inversionesbel.com` dentro de
 
 ## Documentación
 
+- [Contexto tributario, catálogo aportado y cobertura](docs/tax-scope-and-coverage.md)
 - [Alcance funcional por módulo](docs/functional-scope.md)
 - [Arquitectura técnica](docs/architecture.md)
 - [Instalación y operación](docs/operations.md)
