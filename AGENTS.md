@@ -69,8 +69,12 @@ metadata real del sitio objetivo.
 
 ## Validación y despliegue
 
-- Probar primero en `testing15.inversionesbel.com` con
-  `/home/frappe/frappe-bench-staging`, usando el usuario `frappe`.
+- Probar primero en `testing15.inversionesbel.com`, con el bench, el usuario y el
+  mecanismo de acceso que defina la documentación local del servidor que lo aloja.
+  Este repositorio no fija rutas de un servidor concreto.
+- Las operaciones en producción solo se hacen en el servidor de producción y con
+  aprobación explícita. Un servidor de desarrollo o de verificación de respaldos no
+  aloja producción, aunque tenga sitios restaurados desde sus respaldos.
 - Validar el código con el Python del bench, no con Python del sistema.
 - Según el cambio, validar migración repetida, permisos, reporte en
   `Accounting`, cálculo de retenciones e instalación/desinstalación por sitio.
